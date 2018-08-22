@@ -34,16 +34,32 @@ IPATH=`pwd`                                              # grab setup.sh install
 
 
 
+
 #
-# config local correct arch commands ..
+# select the arch to use in setup.sh installs
 #
-if [ $(uname -m) = "i686" ]; then
-  Dftt="x86"
-  arch="wine"
+uN=`uname -m`
+if [ "$uN" = "i686" ]; then
+legit="x86"
 else
-  Dftt="x64"
-  arch="wine64"
+legit="x64"
 fi
+ARCHSELECTED=$(zenity --list --title "☠ venom - arch sellection ☠" --text "Your system identify itself as: $legit [ arch ]\nDo you wish setup.sh to use this arch to install backend applications?\nRemmenber: venom.sh will also use the arch sellected here to work." --radiolist --column "Pick" --column "Option" TRUE "x86" FALSE "x64" --width 350 --height 220) > /dev/null 2>&1
+  if [ "$ARCHSELECTED" = "x86" ]; then
+    echo "[✔] arch sellected to install backend appl: x86"
+    sleep 3
+    Dftt="x86"
+    arch="wine"
+  elif [ "$ARCHSELECTED" = "x64" ]; then
+    echo "[✔] arch sellected to install backend appl: x64"
+    sleep 3
+    Dftt="x64"
+    arch="wine64"
+  else
+    echo "[x] Script execution aborted .."
+    sleep 3
+    exit
+  fi
 
 
 
@@ -81,7 +97,7 @@ cat << !
    | path to apache2 webroot, wine install...  |
    |                                           |
    ╠───────────────────────────────────────────╝
-   |  OS:$OS DISTRO:$DiStRo($Dftt) VERSION:$ver
+   |  OS:$OS DISTRO:$DiStRo($legit) VERSION:$ver
    |_ BROADCAST:$inter IP_ADDR:$lhost
 
 
@@ -108,7 +124,7 @@ else
   echo "[x] zenity                        [ not found ]"
   sleep 1
   echo ""
-  sudo apt-get install zenity --force-yes -y
+  sudo apt-get install zenity
   echo ""
 
       sleep 1
@@ -138,6 +154,21 @@ if [ "$?" -eq "0" ]; then
   echo "[✔] msfconsole........................[ found ]"
   sleep 2
   MSFDATA=$(zenity --title="☠ Enter METASPLOIT FULL PATH ☠" --text "example: /usr/share/metasploit-framework" --entry --width 330) > /dev/null 2>&1
+    # check for non-accepted empty inputs
+    if [ -z "$MSFDATA" ]; then
+      echo ""
+      echo "    ERROR: Empty inputs are not accepted .."
+      echo ""
+      exit
+    fi
+    if [ -d $MSFDATA ]; then
+      :
+    else
+      echo ""
+      echo "    ERROR: Metasploit path not found: $MSFDATA"
+      echo ""
+      MSFDATA=$(zenity --title="☠ Enter METASPLOIT FULL PATH ☠" --text "example: /usr/share/metasploit-framework" --entry --width 330) > /dev/null 2>&1
+    fi
 else
   echo "[x] msfconsole                    [ not found ]"
   sleep 1
@@ -162,7 +193,7 @@ else
   echo "[x] gcc compiler                  [ not found ]"
   sleep 1
   echo ""
-  sudo apt-get install gcc --force-yes -y
+  sudo apt-get install gcc
   echo ""
 
   sleep 1
@@ -187,7 +218,7 @@ fi
 #
 # check correct mingw-gcc install (x86/x64)..
 #
-if [ $(uname -m) = "i686" ]; then
+if [ "$Dftt" = "x86" ]; then
   # check if mingw32 exists
   c0m=`which i586-mingw32msvc-gcc` > /dev/null 2>&1
   if [ "$?" -eq "0" ]; then
@@ -309,7 +340,7 @@ else
   echo "[x] apache2 webserver             [ not found ]"
   sleep 1
   echo ""
-  sudo apt-get install apache2 --force-yes -y
+  sudo apt-get install apache2
   echo ""
 
     sleep 1
@@ -338,6 +369,25 @@ fi
 # ------------------------------------------------
 # Input apache2 webroot path
 ApAcHe=$(zenity --title="☠ Enter APACHE2 WEBROOT PATH ☠" --text "example: /var/www/html" --entry --width 330) > /dev/null 2>&1
+
+    # check for non-accepted empty inputs
+    if [ -z "$ApAcHe" ]; then
+      echo ""
+      echo "    ERROR: Empty inputs are not accepted .."
+      echo ""
+      exit
+    fi
+
+if [ -d $ApAcHe ]; then
+  :
+else
+  echo ""
+  echo "    ERROR: Apache2 path not found: $ApAcHe"
+  echo ""
+  ApAcHe=$(zenity --title="☠ Enter APACHE2 WEBROOT PATH ☠" --text "example: /var/www/html" --entry --width 330) > /dev/null 2>&1
+fi
+
+
 QuE=$(zenity --list --title "APACHE2 DOMAIN NAME CONFIGURATION" --text "\nChose option:" --radiolist --column "Pick" --column "Option" TRUE "Skipp Domain configuration" FALSE "Use Venom domain name" FALSE "Delete Venom domain name" --width 350 --height 220) > /dev/null 2>&1
 D3F="$ApAcHe"
 
@@ -380,7 +430,25 @@ if [ "$QuE" = "Use Venom domain name" ]; then
   sleep 2
 
   # config hosts file (DNS record - DNS_SPOOFING)
-  P0Is0N=$(zenity --title="☠ Enter etter.dns FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+  P0Is0N=$(zenity --title="☠ Enter ettercap FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+
+    # check for non-accepted empty inputs
+    if [ -z "$P0Is0N" ]; then
+      echo ""
+      echo "    ERROR: Empty inputs are not accepted .."
+      echo ""
+      exit
+    fi
+
+    if [ -d $P0Is0N ]; then
+      :
+    else
+      echo ""
+      echo "    ERROR: ettercap path not found: $P0Is0N"
+      echo ""
+      P0Is0N=$(zenity --title="☠ Enter ettercap FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+    fi
+
   echo "[☆] Added          -> DNS record to etter.dns"
   cp $P0Is0N/etter.dns $P0Is0N/etter[bak].dns > /dev/null 2>&1
   sed "s|IpAdDr|$IP|g" etter.dns > etter.filter
@@ -404,7 +472,25 @@ if [ "$QuE" = "Use Venom domain name" ]; then
 elif [ "$QuE" = "Delete Venom domain name" ]; then
     dsrr="NO"
   # use venom default configuration
-  P0Is0N=$(zenity --title="☠ Enter etter.dns FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+  P0Is0N=$(zenity --title="☠ Enter ettercap FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+
+    # check for non-accepted empty inputs
+    if [ -z "$P0Is0N" ]; then
+      echo ""
+      echo "    ERROR: Empty inputs are not accepted .."
+      echo ""
+      exit
+    fi
+
+    if [ -d $P0Is0N ]; then
+      :
+    else
+      echo ""
+      echo "    ERROR: ettercap path not found: $P0Is0N"
+      echo ""
+      P0Is0N=$(zenity --title="☠ Enter ettercap FULL PATH ☠" --text "example: /usr/share/ettercap" --entry --width 330) > /dev/null 2>&1
+    fi
+
   echo ""
   # display config to user
   echo "[☆] DOMAIN_NAME    -> localhost"
@@ -492,41 +578,39 @@ fi
 #
 c0m=`which $arch` > /dev/null 2>&1
 if [ "$?" -eq "0" ]; then
+    echo "[✔] wine..............................[ found ]"
+    sleep 2
+    DrIvC=$(zenity --title="☠ Enter .wine folder PATH ☠" --text "example: $H0m3/.wine" --entry --width 330) > /dev/null 2>&1
 
-  if [ "$arch" = "wine" ]; then
-    echo "[✔] $arch..............................[ found ]"
-    sleep 2
-  else
-    echo "[✔] $arch............................[ found ]"
-    sleep 2
-  fi
-  # input wine drive_c path
-  DrIvC=$(zenity --title="☠ Enter .wine folder PATH ☠" --text "example: $H0m3/.wine" --entry --width 330) > /dev/null 2>&1
-  sleep 2
+      # check for non-accepted empty inputs
+      if [ -z "$DrIvC" ]; then
+        echo ""
+        echo "    ERROR: Empty inputs are not accepted .."
+        echo ""
+        exit
+      fi
+
+      if [ -d $DrIvC ]; then
+        :
+      else
+        echo ""
+        echo "    ERROR: .wine path not found: $DrIvC"
+        echo ""
+        DrIvC=$(zenity --title="☠ Enter .wine folder PATH ☠" --text "example: $H0m3/.wine" --entry --width 330) > /dev/null 2>&1
+      fi
 
 else
+    echo "[x] wine64                        [ not found ]"
+    sleep 1
+    echo ""
+    sudo apt-get install $arch
+    echo ""
 
-  if [ "$arch" = "wine" ]; then
-    echo "[x] $arch                          [ not found ]"
-    sleep 1
-  else
-    echo "[x] $arch                        [ not found ]"
-    sleep 1
-  fi
-  echo ""
-  sudo apt-get install $arch --force-yes -y
-  echo ""
-
-    sleep 1
+    # test again
     again=`which $arch` > /dev/null 2>&1
     if [ "$?" -eq "0" ]; then
-      if [ "$arch" = "wine" ]; then
-        echo "[✔] $arch ........................[ installed ]"
-        sleep 2
-      else
-        echo "[✔] $arch ......................[ installed ]"
-        sleep 2
-      fi
+      echo "[✔] $arch ........................[ installed ]"
+      sleep 2
     else
       echo ""
       echo "    WARNING: Unable to locate package $arch"
@@ -537,10 +621,9 @@ else
       echo "    https://devilzlinux.blogspot.pt/2016/11/how-to-install-wine-on-kali-linux.html"
       echo ""
       sleep 2
+      DrIvC="$H0m3/.wine"
     fi
 fi
-
-
 
 
 
